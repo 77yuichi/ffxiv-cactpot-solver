@@ -91,7 +91,7 @@ const App: React.FC = () => {
                 onClick={handleReset}
                 className="px-6 py-2 text-xs font-bold text-amber-500 hover:text-amber-200 border border-amber-500/30 hover:border-amber-400 rounded transition-all tracking-widest bg-amber-500/5 hover:bg-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]"
             >
-                重製
+                重置
             </button>
           </div>
         </div>
