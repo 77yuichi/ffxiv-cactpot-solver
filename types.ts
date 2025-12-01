@@ -7,6 +7,8 @@ export interface PayoutMap {
 export interface LineResult {
   lineId: number; // 0-7
   sumProbabilities: Record<number, number>; // sum -> probability (0-1)
+  payoutProbabilities: Record<number, number>; // payout (MGP) -> probability (0-1)
+  winningScenarios: Record<number, number[][]>; // payout -> list of required number combinations (e.g. 10000 -> [[2], [3]])
   expectedValue: number;
   maxPossible: number;
 }

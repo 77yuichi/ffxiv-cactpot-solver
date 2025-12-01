@@ -45,7 +45,6 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
   const perms = getPermutations(availableNumbers);
   
   // Array of fully filled grids (flat arrays of 9)
-  // This allocation is safe for standard browser memory (362k items is ~3MB)
   const possibleBoards: number[][] = perms.map((perm) => {
     const newBoard = [...grid];
     emptyIndices.forEach((cellIndex, i) => {
@@ -63,6 +62,10 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
     let maxVal = 0;
     // Map of sum -> count of occurrences
     const sumCounts: Record<number, number> = {}; 
+    const payoutCounts: Record<number, number> = {};
+    
+    // Map of payout -> Set of stringified needed numbers (to deduplicate)
+    const payoutScenarios: Record<number, Set<string>> = {};
 
     possibleBoards.forEach((board) => {
       const sum = board[lineIndices[0]] + board[lineIndices[1]] + board[lineIndices[2]];
@@ -72,7 +75,22 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
       if (payout > maxVal) maxVal = payout;
       
       sumCounts[sum] = (sumCounts[sum] || 0) + 1;
+      payoutCounts[payout] = (payoutCounts[payout] || 0) + 1;
       possibleSums.add(sum);
+
+      // Determine missing numbers for this specific outcome
+      // Filter the line indices to find which ones are empty in the current STATE (grid)
+      const missingValues = lineIndices
+        .filter(idx => grid[idx] === 0) // Only look at cells that are currently 0
+        .map(idx => board[idx])         // Get the value from the hypothetical board
+        .sort((a, b) => a - b);         // Sort to ensure [2,3] is same as [3,2]
+      
+      const scenarioKey = missingValues.join(',');
+      
+      if (!payoutScenarios[payout]) {
+        payoutScenarios[payout] = new Set();
+      }
+      payoutScenarios[payout].add(scenarioKey);
     });
 
     // Convert counts to probabilities
@@ -81,9 +99,24 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
       sumProbabilities[s] = sumCounts[s] / totalPossibilities;
     }
 
+    const payoutProbabilities: Record<number, number> = {};
+    for (const p in payoutCounts) {
+      payoutProbabilities[p] = payoutCounts[p] / totalPossibilities;
+    }
+
+    // Convert scenarios sets back to number arrays
+    const winningScenarios: Record<number, number[][]> = {};
+    for (const p in payoutScenarios) {
+      winningScenarios[p] = Array.from(payoutScenarios[p]).map(str => 
+        str === '' ? [] : str.split(',').map(Number)
+      );
+    }
+
     return {
       lineId,
       sumProbabilities,
+      payoutProbabilities,
+      winningScenarios,
       expectedValue: totalValue / totalPossibilities,
       maxPossible: maxVal
     };

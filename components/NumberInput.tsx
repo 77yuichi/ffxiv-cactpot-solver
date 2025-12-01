@@ -4,8 +4,8 @@ interface NumberInputProps {
   value: number;
   onChange: (val: number) => void;
   disabledNumbers: Set<number>;
-  isRecommended: boolean; 
-  highlight: boolean;     
+  isRecommended: boolean | null; 
+  highlight: boolean | null;     
   isDisabled?: boolean;
 }
 
@@ -102,7 +102,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
       {/* Modern Circular Numpad Popover */}
       {isOpen && !isDisabled && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-12 z-[200]">
-           <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] p-4 animate-in fade-in zoom-in duration-200 flex flex-col items-center gap-3 w-[200px]">
+           <div className="bg-[#1a1b26] backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] p-4 animate-in fade-in zoom-in duration-200 flex flex-col items-center gap-3 w-[200px]">
             
             {/* Number Grid */}
             <div className="grid grid-cols-3 gap-3">
