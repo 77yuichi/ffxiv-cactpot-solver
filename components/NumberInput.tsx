@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface NumberInputProps {
   value: number;
@@ -17,20 +17,34 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   highlight,
   isDisabled
 }) => {
-  
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange(parseInt(e.target.value, 10));
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (num: number) => {
+    onChange(num);
+    setIsOpen(false);
   };
 
   const isRevealed = value !== 0;
   
   // Base Container
-  let containerClass = `relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-300 ease-out shadow-lg `;
+  let containerClass = `relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-300 ease-out shadow-lg select-none `;
 
   // Styles - Black Gold Tech
   
-  // Unscratched: 3D Gradient Gold Orb
-  const unscratchedStyle = "bg-gradient-to-br from-amber-300 via-amber-600 to-amber-800 border-2 border-amber-900/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.4),0_5px_15px_rgba(0,0,0,0.5)]";
+  // Unscratched: 3D Gradient Gold Orb with texture
+  const unscratchedStyle = "bg-[radial-gradient(circle_at_30%_30%,#fbbf24_0%,#d97706_40%,#78350f_90%)] border-2 border-amber-900/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.4),0_5px_15px_rgba(0,0,0,0.5)]";
   
   // Revealed: Silver/White glow
   const revealedStyle = "bg-[#f4f4f5] border-2 border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] text-gray-900";
@@ -61,42 +75,71 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     containerClass += ` ${unscratchedStyle}`;
   }
 
-  return (
-    <div className={containerClass}>
-      
-      {/* Number Display */}
-      {isRevealed && (
-        <span className="text-3xl sm:text-4xl font-mono font-bold tracking-tighter text-gray-900 drop-shadow-sm">
-          {value}
-        </span>
-      )}
-      
-      {/* Question Mark for unscratched */}
-      {!isRevealed && !isDisabled && (
-         <span className="text-amber-950/40 text-2xl font-bold font-serif drop-shadow-[0_1px_0_rgba(255,255,255,0.3)]">?</span>
-      )}
+  // Dynamic Z-Index: If open, must be very high to float above other cells
+  const wrapperZIndex = isOpen ? 'z-[100]' : (highlight || isRecommended ? 'z-20' : 'z-0');
 
-      {/* Invisible Select */}
-      <select
-        value={value}
-        onChange={handleChange}
-        disabled={isDisabled && !isRevealed} 
-        className={`absolute inset-0 w-full h-full opacity-0 appearance-none rounded-full ${isDisabled && !isRevealed ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+  return (
+    <div ref={containerRef} className={`relative ${wrapperZIndex}`}>
+      <div 
+        className={containerClass}
+        onClick={() => {
+          if (!isDisabled) setIsOpen(!isOpen);
+        }}
       >
-        <option value={0}>-</option>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
-           const isOptionDisabled = disabledNumbers.has(num) && value !== num;
-           return (
-             <option 
-                key={num} 
-                value={num} 
-                disabled={isOptionDisabled}
-              >
-               {num}
-             </option>
-           );
-        })}
-      </select>
+        {/* Number Display */}
+        {isRevealed && (
+          <span className="text-3xl sm:text-4xl font-mono font-bold tracking-tighter text-gray-900 drop-shadow-sm">
+            {value}
+          </span>
+        )}
+        
+        {/* Question Mark for unscratched */}
+        {!isRevealed && !isDisabled && (
+           <span className="text-amber-950/60 text-3xl font-bold font-serif drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">?</span>
+        )}
+      </div>
+
+      {/* Modern Circular Numpad Popover */}
+      {isOpen && !isDisabled && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-12 z-[200]">
+           <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] p-4 animate-in fade-in zoom-in duration-200 flex flex-col items-center gap-3 w-[200px]">
+            
+            {/* Number Grid */}
+            <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
+                const isOptionDisabled = disabledNumbers.has(num) && value !== num;
+                return (
+                    <button
+                    key={num}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isOptionDisabled) handleSelect(num);
+                    }}
+                    disabled={isOptionDisabled}
+                    className={`
+                        w-10 h-10 rounded-full flex items-center justify-center font-mono text-lg font-bold transition-all duration-200
+                        ${isOptionDisabled 
+                        ? 'bg-white/5 text-gray-600 cursor-not-allowed' 
+                        : 'bg-white/10 text-amber-400 hover:bg-amber-500 hover:text-black hover:scale-110 shadow-[0_0_10px_rgba(0,0,0,0.5)] active:scale-90 ring-1 ring-white/10'
+                        }
+                    `}
+                    >
+                    {num}
+                    </button>
+                );
+                })}
+            </div>
+
+            {/* Clear Button */}
+            <button
+               onClick={(e) => { e.stopPropagation(); handleSelect(0); }}
+               className="w-full py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold tracking-widest border border-red-500/20 transition-all uppercase hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+            >
+              清除
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

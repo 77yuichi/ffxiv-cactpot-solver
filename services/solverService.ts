@@ -3,6 +3,7 @@ import { LINES } from '../constants';
 
 /**
  * Generates all permutations of an array.
+ * Reverted to standard recursion as it is reliable for N=9.
  */
 const getPermutations = (arr: number[]): number[][] => {
   if (arr.length === 0) return [[]];
@@ -44,6 +45,7 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
   const perms = getPermutations(availableNumbers);
   
   // Array of fully filled grids (flat arrays of 9)
+  // This allocation is safe for standard browser memory (362k items is ~3MB)
   const possibleBoards: number[][] = perms.map((perm) => {
     const newBoard = [...grid];
     emptyIndices.forEach((cellIndex, i) => {
@@ -70,8 +72,6 @@ export const solveCactpot = (grid: GridState, payouts: PayoutMap): SolverResult 
       if (payout > maxVal) maxVal = payout;
       
       sumCounts[sum] = (sumCounts[sum] || 0) + 1;
-      
-      // Track that this sum is possible
       possibleSums.add(sum);
     });
 

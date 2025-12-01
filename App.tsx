@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const isSelectionPhase = revealedCount >= 4;
 
   useEffect(() => {
+    // Standard solve logic - runs on every grid change
     const result = solveCactpot(grid, DEFAULT_PAYOUTS);
     setSolution(result);
   }, [grid]);
